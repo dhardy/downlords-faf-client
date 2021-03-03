@@ -2,20 +2,17 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.PasswordField?>
-<?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.web.WebView?>
 <VBox fx:id="loginRoot" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="login-root" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.faforever.client.login.LoginController">
   <children>
       <VBox alignment="CENTER" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
@@ -27,22 +24,6 @@
                       </VBox.margin>
                       <Region styleClass="login-logo"/>
                   </StackPane>
-                  <VBox fx:id="loginProgressPane" alignment="CENTER" maxWidth="1.7976931348623157E308">
-                      <children>
-                          <ProgressIndicator prefHeight="80.0" prefWidth="80.0"/>
-                          <Label text="%login.progress.message">
-                              <VBox.margin>
-                                  <Insets top="14.0" />
-                              </VBox.margin>
-                          </Label>
-                          <Pane VBox.vgrow="ALWAYS" />
-                          <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onCancelLoginButtonClicked" text="%login.button.cancel">
-                              <VBox.margin>
-                                  <Insets top="20.0" />
-                              </VBox.margin>
-                          </Button>
-                      </children>
-                  </VBox>
                   <Label fx:id="loginErrorLabel" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" styleClass="hint" text="This error message is supposed to be long enough to test text wrapping" wrapText="true">
                       <graphic>
                           <Region styleClass="icon,error-icon" />
@@ -58,8 +39,7 @@
                   </Button>
                   <VBox fx:id="loginFormPane" alignment="TOP_CENTER" maxHeight="1.7976931348623157E308" spacing="5.0">
                       <children>
-                          <TextField fx:id="usernameInput" minWidth="100.0" promptText="%login.name" />
-                          <PasswordField fx:id="passwordInput" minWidth="100.0" promptText="%login.password" />
+                          <WebView fx:id="loginWebView"/>
                           <HBox>
                               <children>
                                   <Label maxHeight="1.7976931348623157E308" minWidth="-Infinity" text="%login.environment">
@@ -94,21 +74,6 @@
                                   <Insets top="20.0" />
                               </VBox.margin>
                           </GridPane>
-                          <CheckBox fx:id="autoLoginCheckBox" alignment="CENTER_RIGHT" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="%login.autoLogin">
-                              <VBox.margin>
-                                  <Insets bottom="10.0" top="10.0" />
-                              </VBox.margin>
-                          </CheckBox>
-                          <Button fx:id="loginButton" defaultButton="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onLoginButtonClicked" text="%login.button.login" />
-                          <HBox alignment="CENTER" spacing="10.0">
-                              <children>
-                                  <Button alignment="CENTER" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#forgotLoginClicked" text="%login.forgot" HBox.hgrow="ALWAYS" />
-                                  <Button alignment="CENTER" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#createNewAccountClicked" text="%login.create" HBox.hgrow="ALWAYS" />
-                              </children>
-                              <VBox.margin>
-                                  <Insets top="20.0" />
-                              </VBox.margin>
-                          </HBox>
                       </children>
                   </VBox>
               </children>

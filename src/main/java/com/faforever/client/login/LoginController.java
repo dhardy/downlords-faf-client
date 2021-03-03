@@ -7,8 +7,8 @@ import com.faforever.client.config.ClientProperties.Server;
 import com.faforever.client.fx.Controller;
 import com.faforever.client.fx.JavaFxUtil;
 import com.faforever.client.fx.PlatformService;
+import com.faforever.client.fx.WebViewConfigurer;
 import com.faforever.client.i18n.I18n;
-import com.faforever.client.preferences.LoginPrefs;
 import com.faforever.client.preferences.PreferencesService;
 import com.faforever.client.update.ClientConfiguration;
 import com.faforever.client.update.ClientConfiguration.Endpoints;
@@ -18,11 +18,9 @@ import com.faforever.client.update.UpdateInfo;
 import com.faforever.client.update.Version;
 import com.faforever.client.user.UserService;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -30,7 +28,9 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.web.WebView;
 import javafx.util.StringConverter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -40,11 +40,10 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @Slf4j
+@RequiredArgsConstructor
 public class LoginController implements Controller<Pane> {
 
   private static final Pattern EMAIL_REGEX = Pattern.compile(".*[@].*[.].*");
@@ -54,16 +53,13 @@ public class LoginController implements Controller<Pane> {
   private final ClientProperties clientProperties;
   private final I18n i18n;
   private final ClientUpdateService clientUpdateService;
+  private final WebViewConfigurer webViewConfigurer;
   private CompletableFuture<Void> initializeFuture;
   private Boolean loginAllowed;
 
   public Pane loginFormPane;
-  public Pane loginProgressPane;
-  public CheckBox autoLoginCheckBox;
-  public TextField usernameInput;
-  public TextField passwordInput;
+  public WebView loginWebView;
   public ComboBox<ClientConfiguration.Endpoints> environmentComboBox;
-  public Button loginButton;
   public Button downloadUpdateButton;
   public Label loginErrorLabel;
   public Pane loginRoot;
@@ -80,20 +76,6 @@ public class LoginController implements Controller<Pane> {
   @VisibleForTesting
   CompletableFuture<UpdateInfo> updateInfoFuture;
 
-  public LoginController(
-      UserService userService,
-      PreferencesService preferencesService,
-      PlatformService platformService,
-      ClientProperties clientProperties,
-      I18n i18n, ClientUpdateService clientUpdateService) {
-    this.userService = userService;
-    this.preferencesService = preferencesService;
-    this.platformService = platformService;
-    this.clientProperties = clientProperties;
-    this.i18n = i18n;
-    this.clientUpdateService = clientUpdateService;
-  }
-
   public void initialize() {
     updateInfoFuture = clientUpdateService.getNewestUpdate();
 
@@ -104,9 +86,6 @@ public class LoginController implements Controller<Pane> {
     loginErrorLabel.setVisible(false);
 
     loginFormPane.managedProperty().bind(loginFormPane.visibleProperty());
-
-    loginProgressPane.managedProperty().bind(loginProgressPane.visibleProperty());
-    loginProgressPane.setVisible(false);
 
     serverConfigPane.managedProperty().bind(serverConfigPane.visibleProperty());
     serverConfigPane.setVisible(false);
@@ -145,6 +124,10 @@ public class LoginController implements Controller<Pane> {
       if (endpoints == null) {
         return;
       }
+
+      // TODO: Use the proper url for the endpoint
+//      loginWebView.getEngine().load(userService.getHydraUrl(endpoints.getRedirect()));
+      loginWebView.getEngine().load(userService.getHydraUrl());
 
       serverHostField.setText(endpoints.getLobby().getHost());
       serverPortField.setText(String.valueOf(endpoints.getLobby().getPort()));
@@ -204,6 +187,38 @@ public class LoginController implements Controller<Pane> {
       loginAllowed = true;
       initializeFuture = CompletableFuture.completedFuture(null);
     }
+
+    webViewConfigurer.configureWebView(loginWebView);
+    loginWebView.getEngine().locationProperty().addListener((observable, oldValue, newValue) -> {
+      int codeIndex = newValue.indexOf("code=");
+      if (codeIndex >= 0) {
+        int codeEnd = newValue.indexOf("&", codeIndex);
+        String code = newValue.substring(codeIndex + 5, codeEnd);
+        int scopeIndex = newValue.indexOf("scope=");
+        int scopeEnd = newValue.indexOf("&", scopeIndex);
+        String scope = newValue.substring(scopeIndex + 6, scopeEnd);
+        int stateIndex = newValue.indexOf("state=");
+        int stateEnd = newValue.indexOf("&", stateIndex);
+        String reportedState;
+        if (stateEnd > 0) {
+          reportedState = newValue.substring(stateIndex + 6, stateEnd);
+        } else {
+          reportedState = newValue.substring(stateIndex + 6);
+        }
+        String state = userService.getState();
+
+        if (!state.equals(reportedState)) {
+          log.warn("States do not match We are under attack!");
+          // TODO: Report to the user take action something
+        }
+
+        // FIXME: Remove debug logging
+        log.info("code = {}", code);
+        log.info("reportedState = {}", reportedState);
+        log.info("state = {}", state);
+        log.info("scope = {}", scope);
+      }
+    });
   }
 
   private void showClientOutdatedPane(String minimumVersion) {
@@ -239,27 +254,10 @@ public class LoginController implements Controller<Pane> {
   public void display() {
     setShowLoginProgress(false);
 
-    LoginPrefs loginPrefs = preferencesService.getPreferences().getLogin();
-    String username = loginPrefs.getUsername();
-    String password = loginPrefs.getPassword();
-    boolean isAutoLogin = loginPrefs.getAutoLogin();
-
-    // Fill the form even if autoLogin is true, since user may cancel the login
-    usernameInput.setText(Strings.nullToEmpty(username));
-    autoLoginCheckBox.setSelected(isAutoLogin);
-
     initializeFuture.thenRun(() -> {
       if (loginAllowed == null) {
         log.error("loginAllowed not set for unknown reason. Possible race condition detected. Enabling login now to preserve user experience.");
         loginAllowed = true;
-      }
-
-      if (loginAllowed && loginPrefs.getAutoLogin() && !isNullOrEmpty(username) && !isNullOrEmpty(password)) {
-        login(username, password, true);
-      } else if (isNullOrEmpty(username)) {
-        usernameInput.requestFocus();
-      } else {
-        passwordInput.requestFocus();
       }
     });
   }
@@ -269,8 +267,6 @@ public class LoginController implements Controller<Pane> {
       loginErrorLabel.setVisible(false);
     }
     loginFormPane.setVisible(!show);
-    loginProgressPane.setVisible(show);
-    loginButton.setDisable(show);
   }
 
   private void login(String username, String password, boolean autoLogin) {
@@ -312,11 +308,6 @@ public class LoginController implements Controller<Pane> {
   }
 
   public void onLoginButtonClicked() {
-    String username = usernameInput.getText();
-    String password = passwordInput.getText();
-
-    boolean autoLogin = autoLoginCheckBox.isSelected();
-
     Server server = clientProperties.getServer();
     server.setHost(serverHostField.getText());
     server.setPort(Integer.parseInt(serverPortField.getText()));
@@ -330,8 +321,6 @@ public class LoginController implements Controller<Pane> {
     irc.setPort(Integer.parseInt(ircServerPortField.getText()));
 
     clientProperties.getApi().setBaseUrl(apiBaseUrlField.getText());
-
-    login(username, password, autoLogin);
   }
 
   public void onCancelLoginButtonClicked() {

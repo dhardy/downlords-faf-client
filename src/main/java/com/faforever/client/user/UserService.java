@@ -14,7 +14,9 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.RandomStringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
@@ -40,7 +42,15 @@ public class UserService implements InitializingBean {
   private String password;
   private Integer userId;
   private CompletableFuture<Void> loginFuture;
+  @Getter
+  private String state;
 
+  public String getHydraUrl() {
+    state = RandomStringUtils.randomAlphanumeric(50, 100);
+    return String.format("https://hydra.test.faforever.com/oauth2/auth?response_type=code&client_id=faf-ng-client" +
+        "&state=%s&redirect_uri=http://localhost:4200/index.html" +
+        "&scope=openid offline public_profile write_account_data create_user", state);
+  }
 
   public CompletableFuture<Void> login(String username, String password, boolean autoLogin) {
     this.password = password;
