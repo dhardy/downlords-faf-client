@@ -212,6 +212,8 @@ public class LoginController implements Controller<Pane> {
           // TODO: Report to the user take action something
         }
 
+        userService.login(code);
+
         // FIXME: Remove debug logging
         log.info("code = {}", code);
         log.info("reportedState = {}", reportedState);

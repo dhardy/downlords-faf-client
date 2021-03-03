@@ -52,6 +52,11 @@ public class UserService implements InitializingBean {
         "&scope=openid offline public_profile write_account_data create_user", state);
   }
 
+  public CompletableFuture<Void> login(String token) {
+    // TODO: implement ory hydra login with server
+    return CompletableFuture.completedFuture(null);
+  }
+
   public CompletableFuture<Void> login(String username, String password, boolean autoLogin) {
     this.password = password;
 
