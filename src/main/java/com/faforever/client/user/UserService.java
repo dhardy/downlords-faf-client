@@ -70,7 +70,7 @@ public class UserService implements InitializingBean {
   public CompletableFuture<Void> login(String code) {
     return CompletableFuture.runAsync(() -> {
       CloseableHttpClient httpclient = HttpClients.createDefault();
-      HttpPost httppost = new HttpPost("https://hydra.test.faforever.com/oauth2/token/");
+      HttpPost httppost = new HttpPost("https://hydra.test.faforever.com/oauth2/token");
 
       // Request parameters and other properties.
       List<NameValuePair> params = new ArrayList<NameValuePair>(2);
