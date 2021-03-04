@@ -17,13 +17,28 @@ import javafx.beans.property.StringProperty;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 @Lazy
 @Service
@@ -52,9 +67,45 @@ public class UserService implements InitializingBean {
         "&scope=openid offline public_profile write_account_data create_user", state);
   }
 
-  public CompletableFuture<Void> login(String token) {
-    // TODO: implement ory hydra login with server
-    return CompletableFuture.completedFuture(null);
+  public CompletableFuture<Void> login(String code) {
+    return CompletableFuture.runAsync(() -> {
+      CloseableHttpClient httpclient = HttpClients.createDefault();
+      HttpPost httppost = new HttpPost("https://hydra.test.faforever.com/oauth2/token/");
+
+      // Request parameters and other properties.
+      List<NameValuePair> params = new ArrayList<NameValuePair>(2);
+      params.add(new BasicNameValuePair("code", code));
+      params.add(new BasicNameValuePair("client_id", "faf-ng-client"));
+      params.add(new BasicNameValuePair("redirect_uri", "http://localhost:4200/index.html"));
+      params.add(new BasicNameValuePair("grant_type", "authorization_code"));
+      try {
+        httppost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+      } catch (UnsupportedEncodingException e) {
+        throw new CompletionException(e);
+      }
+
+      //Execute and get the response.
+      HttpResponse response = null;
+      try {
+        response = httpclient.execute(httppost);
+      } catch (IOException e) {
+        throw new CompletionException(e);
+      }
+      HttpEntity entity = response.getEntity();
+
+      if (entity != null) {
+        try (InputStream instream = entity.getContent()) {
+          String string = new String(instream.readAllBytes());
+          logger.info(string);
+        } catch (IOException e) {
+          throw new CompletionException(e);
+        }
+      }
+      // TODO: implement ory hydra login with server
+    }).exceptionally(throwable -> {
+      logger.error("Error logging in", throwable);
+      return null;
+    });
   }
 
   public CompletableFuture<Void> login(String username, String password, boolean autoLogin) {
