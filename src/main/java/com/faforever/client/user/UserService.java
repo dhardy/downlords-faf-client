@@ -78,6 +78,7 @@ public class UserService implements InitializingBean {
       params.add(new BasicNameValuePair("client_id", "faf-ng-client"));
       params.add(new BasicNameValuePair("redirect_uri", "http://localhost:4200/index.html"));
       params.add(new BasicNameValuePair("grant_type", "authorization_code"));
+      params.add(new BasicNameValuePair("client_secret", "banana"));
       try {
         httppost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
       } catch (UnsupportedEncodingException e) {
