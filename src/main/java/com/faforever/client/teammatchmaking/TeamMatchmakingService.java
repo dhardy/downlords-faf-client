@@ -203,6 +203,7 @@ public class TeamMatchmakingService {
         i18n.get("teammatchmaking.notification.matchFound.title"),
         i18n.get("teammatchmaking.notification.matchFound.message")
     ));
+
     matchmakingQueues.stream()
         .filter(q -> Objects.equals(q.getQueueName(), message.getQueueName()))
         .forEach(q -> {
