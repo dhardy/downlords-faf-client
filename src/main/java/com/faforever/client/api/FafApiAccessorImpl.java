@@ -54,6 +54,7 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 import org.springframework.security.oauth2.client.token.grant.password.ResourceOwnerPasswordResourceDetails;
@@ -132,6 +133,7 @@ public class FafApiAccessorImpl implements FafApiAccessor, InitializingBean {
   private final ClientProperties clientProperties;
   private final JsonApiMessageConverter jsonApiMessageConverter;
   private final JsonApiErrorHandler jsonApiErrorHandler;
+  private final TokenService tokenService;
   private final HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
 
   private RestTemplateBuilder templateBuilder;
@@ -638,9 +640,15 @@ public class FafApiAccessorImpl implements FafApiAccessor, InitializingBean {
     details.setUsername(username);
     details.setPassword(password);
 
+    OAuthTokenInterceptor globalOAuthTokenInterceptor = new OAuthTokenInterceptor(tokenService);
+
+    List<ClientHttpRequestInterceptor> interceptors = new ArrayList<>();
+    interceptors.add(globalOAuthTokenInterceptor);
+
     restOperations = templateBuilder
         // Base URL can be changed in login window
         .rootUri(apiProperties.getBaseUrl())
+        .interceptors(interceptors)
         .configure(new OAuth2RestTemplate(details));
 
     authorizedLatch.countDown();
