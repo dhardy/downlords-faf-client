@@ -28,6 +28,10 @@ public class GpgGameMessage implements SerializableMessage {
     return args;
   }
 
+  public String getRawCommand() {
+    return command;
+  }
+
   public GpgClientCommand getCommand() {
     return GpgClientCommand.fromString(command);
   }
