@@ -37,7 +37,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.regex.Pattern;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -45,7 +44,6 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class LoginController implements Controller<Pane> {
 
-  private static final Pattern EMAIL_REGEX = Pattern.compile(".*[@].*[.].*");
   private final UserService userService;
   private final PreferencesService preferencesService;
   private final PlatformService platformService;
@@ -54,7 +52,6 @@ public class LoginController implements Controller<Pane> {
   private final ClientUpdateService clientUpdateService;
   private final WebViewConfigurer webViewConfigurer;
   private CompletableFuture<Void> initializeFuture;
-  private Boolean loginAllowed;
 
   public Pane loginFormPane;
   public WebView loginWebView;
@@ -76,20 +73,13 @@ public class LoginController implements Controller<Pane> {
   CompletableFuture<UpdateInfo> updateInfoFuture;
 
   public void initialize() {
+    JavaFxUtil.bindManagedToVisible(downloadUpdateButton, loginErrorLabel, loginFormPane, loginWebView,
+        serverConfigPane, serverStatusButton);
     updateInfoFuture = clientUpdateService.getNewestUpdate();
 
-    downloadUpdateButton.managedProperty().bind(downloadUpdateButton.visibleProperty());
     downloadUpdateButton.setVisible(false);
-
-    loginErrorLabel.managedProperty().bind(loginErrorLabel.visibleProperty());
     loginErrorLabel.setVisible(false);
-
-    loginFormPane.managedProperty().bind(loginFormPane.visibleProperty());
-
-    serverConfigPane.managedProperty().bind(serverConfigPane.visibleProperty());
     serverConfigPane.setVisible(false);
-
-    serverStatusButton.managedProperty().bind(serverStatusButton.visibleProperty());
     serverStatusButton.setVisible(clientProperties.getStatusPageUrl() != null);
 
     // fallback values if configuration is not read from remote
@@ -165,25 +155,27 @@ public class LoginController implements Controller<Pane> {
             try {
               shouldUpdate = Version.shouldUpdate(Version.getCurrentVersion(), minimumVersion);
             } catch (Exception e) {
-              log.error("Something went wrong checking for update", e);
+              log.error("Error occurred checking for update", e);
             }
+
             if (minimumVersion != null && shouldUpdate) {
-              loginAllowed = false;
               JavaFxUtil.runLater(() -> showClientOutdatedPane(minimumVersion));
-            } else {
-              loginAllowed = true;
             }
+
             JavaFxUtil.runLater(() -> {
               environmentComboBox.getItems().addAll(clientConfiguration.getEndpoints());
               environmentComboBox.getSelectionModel().select(defaultEndpoint);
             });
           }).exceptionally(throwable -> {
             log.warn("Could not read remote preferences", throwable);
-            loginAllowed = true;
             return null;
+          }).thenRunAsync(() -> {
+            String refreshToken = preferencesService.getPreferences().getLogin().getRefreshToken();
+            if (refreshToken != null) {
+              userService.loginWithRefreshToken(refreshToken);
+            }
           });
     } else {
-      loginAllowed = true;
       initializeFuture = CompletableFuture.completedFuture(null);
     }
 
@@ -193,9 +185,6 @@ public class LoginController implements Controller<Pane> {
       if (codeIndex >= 0) {
         int codeEnd = newValue.indexOf("&", codeIndex);
         String code = newValue.substring(codeIndex + 5, codeEnd);
-        int scopeIndex = newValue.indexOf("scope=");
-        int scopeEnd = newValue.indexOf("&", scopeIndex);
-        String scope = newValue.substring(scopeIndex + 6, scopeEnd);
         int stateIndex = newValue.indexOf("state=");
         int stateEnd = newValue.indexOf("&", stateIndex);
         String reportedState;
@@ -211,13 +200,27 @@ public class LoginController implements Controller<Pane> {
           // TODO: Report to the user take action something
         }
 
-        userService.login(code);
+        Server server = clientProperties.getServer();
+        server.setHost(serverHostField.getText());
+        server.setPort(Integer.parseInt(serverPortField.getText()));
 
-        // FIXME: Remove debug logging
-        log.info("code = {}", code);
-        log.info("reportedState = {}", reportedState);
-        log.info("state = {}", state);
-        log.info("scope = {}", scope);
+        Replay replay = clientProperties.getReplay();
+        replay.setRemoteHost(replayServerHostField.getText());
+        replay.setRemotePort(Integer.parseInt(replayServerPortField.getText()));
+
+        Irc irc = clientProperties.getIrc();
+        irc.setHost(ircServerHostField.getText());
+        irc.setPort(Integer.parseInt(ircServerPortField.getText()));
+
+        clientProperties.getApi().setBaseUrl(apiBaseUrlField.getText());
+
+        initializeFuture.join();
+
+        if (!loginWebView.isVisible()) {
+          return;
+        }
+
+        userService.login(code);
       }
     });
   }
@@ -228,6 +231,7 @@ public class LoginController implements Controller<Pane> {
       loginErrorLabel.setVisible(true);
       downloadUpdateButton.setVisible(true);
       loginFormPane.setDisable(true);
+      loginWebView.setVisible(false);
       log.warn("Update required");
     });
   }
@@ -252,44 +256,6 @@ public class LoginController implements Controller<Pane> {
     });
   }
 
-  public void display() {
-    setShowLoginProgress(false);
-
-    initializeFuture.thenRun(() -> {
-      if (loginAllowed == null) {
-        log.error("loginAllowed not set for unknown reason. Possible race condition detected. Enabling login now to preserve user experience.");
-        loginAllowed = true;
-      }
-    });
-  }
-
-  private void setShowLoginProgress(boolean show) {
-    if (show) {
-      loginErrorLabel.setVisible(false);
-    }
-    loginFormPane.setVisible(!show);
-  }
-
-  public void onLoginButtonClicked() {
-    Server server = clientProperties.getServer();
-    server.setHost(serverHostField.getText());
-    server.setPort(Integer.parseInt(serverPortField.getText()));
-
-    Replay replay = clientProperties.getReplay();
-    replay.setRemoteHost(replayServerHostField.getText());
-    replay.setRemotePort(Integer.parseInt(replayServerPortField.getText()));
-
-    Irc irc = clientProperties.getIrc();
-    irc.setHost(ircServerHostField.getText());
-    irc.setPort(Integer.parseInt(ircServerPortField.getText()));
-
-    clientProperties.getApi().setBaseUrl(apiBaseUrlField.getText());
-  }
-
-  public void onCancelLoginButtonClicked() {
-    userService.cancelLogin();
-    setShowLoginProgress(false);
-  }
 
   public void onDownloadUpdateButtonClicked() {
     downloadUpdateButton.setOnAction(event -> {

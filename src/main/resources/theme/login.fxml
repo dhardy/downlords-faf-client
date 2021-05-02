@@ -10,7 +10,6 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.RowConstraints?>
-<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.web.WebView?>
 <VBox fx:id="loginRoot" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="login-root" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.faforever.client.login.LoginController">
@@ -18,12 +17,6 @@
       <VBox alignment="CENTER" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
           <VBox alignment="CENTER" maxWidth="-Infinity" prefWidth="400.0" styleClass="login">
               <children>
-                  <StackPane onMouseClicked="#onMouseClicked">
-                      <VBox.margin>
-                          <Insets bottom="70.0" top="70.0"/>
-                      </VBox.margin>
-                      <Region styleClass="login-logo"/>
-                  </StackPane>
                   <Label fx:id="loginErrorLabel" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" styleClass="hint" text="This error message is supposed to be long enough to test text wrapping" wrapText="true">
                       <graphic>
                           <Region styleClass="icon,error-icon" />
@@ -42,12 +35,15 @@
                           <WebView fx:id="loginWebView"/>
                           <HBox>
                               <children>
-                                  <Label maxHeight="1.7976931348623157E308" minWidth="-Infinity" text="%login.environment">
+                                  <Label maxHeight="1.7976931348623157E308" minWidth="-Infinity"
+                                         text="%login.environment"
+                                         onMouseClicked="#onMouseClicked">
                                       <HBox.margin>
-                                          <Insets right="10.0" />
+                                          <Insets right="10.0"/>
                                       </HBox.margin>
                                   </Label>
-                                  <ComboBox fx:id="environmentComboBox" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                                  <ComboBox fx:id="environmentComboBox" maxWidth="1.7976931348623157E308"
+                                            HBox.hgrow="ALWAYS"/>
                               </children>
                           </HBox>
                           <GridPane fx:id="serverConfigPane" vgap="5.0">

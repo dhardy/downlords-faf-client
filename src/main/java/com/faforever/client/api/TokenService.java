@@ -1,5 +1,6 @@
 package com.faforever.client.api;
 
+import com.faforever.client.preferences.PreferencesService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
@@ -17,11 +18,13 @@ import java.util.Collections;
 @Slf4j
 public class TokenService {
   private final TokenServiceProperties tokenServiceProperties;
+  private final PreferencesService preferencesService;
   private final RestTemplate simpleRestTemplate;
   private OAuth2AccessToken tokenCache;
 
-  public TokenService(TokenServiceProperties tokenServiceProperties) {
+  public TokenService(TokenServiceProperties tokenServiceProperties, PreferencesService preferencesService) {
     this.tokenServiceProperties = tokenServiceProperties;
+    this.preferencesService = preferencesService;
 
     simpleRestTemplate = new RestTemplateBuilder().
         build();
@@ -43,6 +46,7 @@ public class TokenService {
     headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
     headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON_UTF8));
 
+    //TODO use configured values
     MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
     map.add("code", code);
     map.add("client_id", "faf-ng-client");
@@ -57,6 +61,8 @@ public class TokenService {
         request,
         OAuth2AccessToken.class
     );
+    preferencesService.getPreferences().getLogin().setRefreshToken(tokenCache.getRefreshToken().toString());
+    preferencesService.storeInBackground();
     return tokenCache;
   }
 
@@ -69,6 +75,7 @@ public class TokenService {
     headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
     headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON_UTF8));
 
+    //TODO use configured values
     MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
     map.add("refresh_token", refreshToken);
     map.add("client_id", "faf-ng-client");
@@ -83,6 +90,9 @@ public class TokenService {
         request,
         OAuth2AccessToken.class
     );
+
+    preferencesService.getPreferences().getLogin().setRefreshToken(tokenCache.getRefreshToken().toString());
+    preferencesService.storeInBackground();
     return tokenCache;
   }
 }

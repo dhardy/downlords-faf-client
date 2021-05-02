@@ -56,9 +56,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.security.oauth2.client.OAuth2RestTemplate;
-import org.springframework.security.oauth2.client.token.grant.password.ResourceOwnerPasswordResourceDetails;
-import org.springframework.security.oauth2.common.AuthenticationScheme;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
@@ -631,17 +628,11 @@ public class FafApiAccessorImpl implements FafApiAccessor, InitializingBean {
   public void authorize() {
     Api apiProperties = clientProperties.getApi();
 
-    ResourceOwnerPasswordResourceDetails details = new ResourceOwnerPasswordResourceDetails();
-    details.setClientId(apiProperties.getClientId());
-    details.setClientSecret(apiProperties.getClientSecret());
-    details.setClientAuthenticationScheme(AuthenticationScheme.header);
-    details.setAccessTokenUri(apiProperties.getBaseUrl() + OAUTH_TOKEN_PATH);
-
     restOperations = templateBuilder
         // Base URL can be changed in login window
         .rootUri(apiProperties.getBaseUrl())
         .interceptors(oAuthTokenInterceptor)
-        .configure(new OAuth2RestTemplate(details));
+        .build();
 
     authorizedLatch.countDown();
 

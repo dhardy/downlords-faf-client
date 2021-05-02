@@ -452,7 +452,7 @@ public class PreferencesBuilder {
     private final LoginPrefs loginPrefs = preferences.getLogin();
 
     public LoginPrefsBuilder username(String username) {
-      loginPrefs.setUsername(username);
+      loginPrefs.setRefreshToken(username);
       return this;
     }
 

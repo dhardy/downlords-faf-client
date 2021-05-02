@@ -38,7 +38,6 @@ public class UserService implements InitializingBean {
   private final EventBus eventBus;
   private final TokenService tokenService;
 
-  private String password;
   private Integer userId;
   private CompletableFuture<Void> loginFuture;
   @Getter
@@ -52,11 +51,20 @@ public class UserService implements InitializingBean {
   }
 
   public CompletableFuture<Void> login(String code) {
-    loginFuture = CompletableFuture.runAsync(() -> {
-      tokenService.loginWithAuthorizationCode(code);
-    }).thenRunAsync(() -> eventBus.post(new HydraAuthorizedEvent()))
+    loginFuture = CompletableFuture.runAsync(() -> tokenService.loginWithAuthorizationCode(code))
+        .thenRunAsync(() -> eventBus.post(new HydraAuthorizedEvent()))
         .exceptionally(throwable -> {
           log.error("Error logging in", throwable);
+          return null;
+        });
+    return loginFuture;
+  }
+
+  public CompletableFuture<Void> loginWithRefreshToken(String refreshToken) {
+    loginFuture = CompletableFuture.runAsync(() -> tokenService.loginWithRefreshToken(refreshToken))
+        .thenRunAsync(() -> eventBus.post(new HydraAuthorizedEvent()))
+        .exceptionally(throwable -> {
+          log.error("Cannot login with refresh token", throwable);
           return null;
         });
     return loginFuture;
@@ -69,7 +77,7 @@ public class UserService implements InitializingBean {
 
 
   public String getPassword() {
-    return password;
+    return "foo";
   }
 
   public Integer getUserId() {
@@ -97,7 +105,8 @@ public class UserService implements InitializingBean {
     log.info("Logging out");
     fafService.disconnect();
     eventBus.post(new LoggedOutEvent());
-    preferencesService.getPreferences().getLogin().setAutoLogin(false);
+    preferencesService.getPreferences().getLogin().setRefreshToken(null);
+    preferencesService.storeInBackground();
   }
 
   @Override
@@ -111,7 +120,7 @@ public class UserService implements InitializingBean {
   public void onApiAuthorizedEvent(ApiAuthorizedEvent event) {
     fafService.getCurrentPlayer().thenAccept(me -> {
       username.set(me.getUserName());
-      userId = Integer.parseInt(me.getUserId());
+      userId = Integer.parseInt(me.getId());
       eventBus.post(new LoginSuccessEvent());
     });
   }

@@ -118,7 +118,7 @@ public class ServerAccessorImplTest extends AbstractPlainJavaFxTest {
     instance = new FafServerAccessorImpl(preferencesService, uidService, notificationService, i18n, reportingService, taskScheduler, eventBus, reconnectTimerService, clientProperties);
     instance.afterPropertiesSet();
     LoginPrefs loginPrefs = new LoginPrefs();
-    loginPrefs.setUsername("junit");
+    loginPrefs.setRefreshToken("junit");
     loginPrefs.setPassword("password");
 
     when(preferencesService.getFafDataDirectory()).thenReturn(faDirectory.getRoot().toPath());
