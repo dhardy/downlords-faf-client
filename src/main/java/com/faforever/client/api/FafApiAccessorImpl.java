@@ -5,8 +5,9 @@ import com.faforever.client.config.ClientProperties;
 import com.faforever.client.config.ClientProperties.Api;
 import com.faforever.client.io.CountingFileSystemResource;
 import com.faforever.client.mod.FeaturedMod;
+import com.faforever.client.user.event.ApiAuthorizedEvent;
+import com.faforever.client.user.event.HydraAuthorizedEvent;
 import com.faforever.client.user.event.LoggedOutEvent;
-import com.faforever.client.user.event.LoginSuccessEvent;
 import com.faforever.client.util.Tuple;
 import com.faforever.client.vault.search.SearchController.SearchConfig;
 import com.faforever.client.vault.search.SearchController.SortConfig;
@@ -54,7 +55,6 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 import org.springframework.security.oauth2.client.token.grant.password.ResourceOwnerPasswordResourceDetails;
@@ -133,7 +133,7 @@ public class FafApiAccessorImpl implements FafApiAccessor, InitializingBean {
   private final ClientProperties clientProperties;
   private final JsonApiMessageConverter jsonApiMessageConverter;
   private final JsonApiErrorHandler jsonApiErrorHandler;
-  private final TokenService tokenService;
+  private final OAuthTokenInterceptor oAuthTokenInterceptor;
   private final HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
 
   private RestTemplateBuilder templateBuilder;
@@ -164,8 +164,8 @@ public class FafApiAccessorImpl implements FafApiAccessor, InitializingBean {
   }
 
   @Subscribe
-  public void onLoginSuccessEvent(LoginSuccessEvent event) {
-    authorize(event.getUserId(), event.getUsername(), event.getPassword());
+  public void onAuthorizedEvent(HydraAuthorizedEvent event) {
+    authorize();
   }
 
   @Override
@@ -628,8 +628,7 @@ public class FafApiAccessorImpl implements FafApiAccessor, InitializingBean {
   }
 
   @Override
-  @SneakyThrows
-  public void authorize(int playerId, String username, String password) {
+  public void authorize() {
     Api apiProperties = clientProperties.getApi();
 
     ResourceOwnerPasswordResourceDetails details = new ResourceOwnerPasswordResourceDetails();
@@ -637,21 +636,16 @@ public class FafApiAccessorImpl implements FafApiAccessor, InitializingBean {
     details.setClientSecret(apiProperties.getClientSecret());
     details.setClientAuthenticationScheme(AuthenticationScheme.header);
     details.setAccessTokenUri(apiProperties.getBaseUrl() + OAUTH_TOKEN_PATH);
-    details.setUsername(username);
-    details.setPassword(password);
-
-    OAuthTokenInterceptor globalOAuthTokenInterceptor = new OAuthTokenInterceptor(tokenService);
-
-    List<ClientHttpRequestInterceptor> interceptors = new ArrayList<>();
-    interceptors.add(globalOAuthTokenInterceptor);
 
     restOperations = templateBuilder
         // Base URL can be changed in login window
         .rootUri(apiProperties.getBaseUrl())
-        .interceptors(interceptors)
+        .interceptors(oAuthTokenInterceptor)
         .configure(new OAuth2RestTemplate(details));
 
     authorizedLatch.countDown();
+
+    eventBus.post(new ApiAuthorizedEvent());
   }
 
   @NotNull

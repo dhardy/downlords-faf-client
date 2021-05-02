@@ -36,7 +36,6 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 
@@ -271,44 +270,6 @@ public class LoginController implements Controller<Pane> {
     loginFormPane.setVisible(!show);
   }
 
-  private void login(String username, String password, boolean autoLogin) {
-    setShowLoginProgress(true);
-
-    if (EMAIL_REGEX.matcher(username).matches()) {
-      onLoginWithEmail();
-      return;
-    }
-    userService.login(username, password, autoLogin)
-        .exceptionally(throwable -> {
-          onLoginFailed(throwable);
-          return null;
-        });
-  }
-
-  private void onLoginWithEmail() {
-    loginErrorLabel.setText(i18n.get("login.withEmailWarning"));
-    loginErrorLabel.setVisible(true);
-    setShowLoginProgress(false);
-  }
-
-  private void onLoginFailed(Throwable e) {
-    log.warn("Login failed", e);
-    JavaFxUtil.runLater(() -> {
-      if (e instanceof CancellationException) {
-        loginErrorLabel.setVisible(false);
-      } else {
-        if (e instanceof LoginFailedException) {
-          loginErrorLabel.setText(e.getMessage());
-        } else {
-          loginErrorLabel.setText(e.getCause().getLocalizedMessage());
-        }
-        loginErrorLabel.setVisible(true);
-      }
-
-      setShowLoginProgress(false);
-    });
-  }
-
   public void onLoginButtonClicked() {
     Server server = clientProperties.getServer();
     server.setHost(serverHostField.getText());
@@ -350,14 +311,6 @@ public class LoginController implements Controller<Pane> {
 
   public Pane getRoot() {
     return loginRoot;
-  }
-
-  public void forgotLoginClicked() {
-    platformService.showDocument(clientProperties.getWebsite().getForgotPasswordUrl());
-  }
-
-  public void createNewAccountClicked() {
-    platformService.showDocument(clientProperties.getWebsite().getCreateAccountUrl());
   }
 
   public void onMouseClicked(MouseEvent event) {

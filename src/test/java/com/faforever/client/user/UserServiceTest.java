@@ -12,10 +12,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.context.ApplicationContext;
 
-import java.util.concurrent.CompletableFuture;
-
 import static org.junit.Assert.assertNull;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -77,31 +74,9 @@ public class UserServiceTest {
   }
 
   @Test
-  public void testGetPassword() throws Exception {
-    assertNull(instance.getPassword());
-  }
-
-  @Test
   public void testCancelLoginDoesntDisconnectIfLoginNotInProgress() throws Exception {
     instance.cancelLogin();
 
     verify(fafService, never()).disconnect();
-  }
-
-  @Test
-  public void testCancelLoginDisconnectsIfLoginInProgress() throws Exception {
-    when(fafService.connectAndLogIn(any(), any())).thenReturn(new CompletableFuture<>());
-
-    instance.login("username", "password", false);
-    instance.cancelLogin();
-
-    verify(fafService).disconnect();
-  }
-
-  @Test
-  public void testChangePassword() throws Exception {
-    instance.changePassword("currentPasswordHash", "newPasswordHash");
-
-    verify(taskService).submitTask(any(ChangePasswordTask.class));
   }
 }

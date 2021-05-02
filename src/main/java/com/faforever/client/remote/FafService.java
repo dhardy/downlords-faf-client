@@ -41,6 +41,7 @@ import com.faforever.commons.api.dto.Map;
 import com.faforever.commons.api.dto.MapPoolAssignment;
 import com.faforever.commons.api.dto.MapVersion;
 import com.faforever.commons.api.dto.MapVersionReview;
+import com.faforever.commons.api.dto.MeResult;
 import com.faforever.commons.api.dto.Mod;
 import com.faforever.commons.api.dto.ModVersionReview;
 import com.faforever.commons.api.dto.NeroxisGeneratorParams;
@@ -245,6 +246,11 @@ public class FafService {
     return CompletableFuture.completedFuture(fafServerAccessor.getAvailableAvatars().stream()
         .map(AvatarBean::fromAvatar)
         .collect(Collectors.toList()));
+  }
+
+  @Async
+  public CompletableFuture<MeResult> getCurrentPlayer() {
+    return CompletableFuture.completedFuture(fafApiAccessor.getOwnPlayer());
   }
 
   @Async

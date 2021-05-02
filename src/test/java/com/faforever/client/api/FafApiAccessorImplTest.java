@@ -89,7 +89,7 @@ public class FafApiAccessorImplTest {
 
     instance = new FafApiAccessorImpl(eventBus, restTemplateBuilder, new ClientProperties(), jsonApiMessageConverter, jsonApiErrorHandler);
     instance.afterPropertiesSet();
-    instance.authorize(123, "junit", "42");
+    instance.authorize();
   }
 
   @Test

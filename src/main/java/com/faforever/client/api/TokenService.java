@@ -30,7 +30,7 @@ public class TokenService {
   public OAuth2AccessToken getRefreshedToken() {
     if (tokenCache == null || tokenCache.isExpired()) {
       log.debug("Token expired, fetching new token");
-      tokenCache = refreshOAuthToken();
+      refreshOAuthToken();
     } else {
       log.debug("Token still valid for {} seconds", tokenCache.getExpiresIn());
     }
@@ -38,33 +38,51 @@ public class TokenService {
     return tokenCache;
   }
 
-  public OAuth2AccessToken loginWithCredentials(String username, String password) {
+  public OAuth2AccessToken loginWithAuthorizationCode(String code) {
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
     headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON_UTF8));
 
     MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-    map.add("grant_type", "password");
-    map.add("resource", tokenServiceProperties.getAadB2bResource());
-    map.add("client_id", tokenServiceProperties.getAadB2bClientId());
-    map.add("username", username);
-    map.add("password", password);
+    map.add("code", code);
+    map.add("client_id", "faf-ng-client");
+    map.add("redirect_uri", "https://test.faforever.com/callback");
+    map.add("grant_type", "authorization_code");
+    map.add("client_secret", "banana");
 
     HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
 
-    return simpleRestTemplate.postForObject(
-        tokenServiceProperties.getAadB2bUrl(),
+    tokenCache = simpleRestTemplate.postForObject(
+        "https://hydra.test.faforever.com/oauth2/token",
         request,
         OAuth2AccessToken.class
     );
+    return tokenCache;
   }
 
-  private OAuth2AccessToken refreshOAuthToken() {
-    return loginWithRefreshToken(tokenCache.getRefreshToken().getValue());
+  private void refreshOAuthToken() {
+    tokenCache = loginWithRefreshToken(tokenCache.getRefreshToken().getValue());
   }
 
   public OAuth2AccessToken loginWithRefreshToken(String refreshToken) {
-    // add code for fetching OAuth2 token from refresh token here
-    return null;
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+    headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON_UTF8));
+
+    MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+    map.add("refresh_token", refreshToken);
+    map.add("client_id", "faf-ng-client");
+    map.add("redirect_uri", "https://test.faforever.com/callback");
+    map.add("grant_type", "refresh_token");
+    map.add("client_secret", "banana");
+
+    HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+
+    tokenCache = simpleRestTemplate.postForObject(
+        "https://hydra.test.faforever.com/oauth2/token",
+        request,
+        OAuth2AccessToken.class
+    );
+    return tokenCache;
   }
 }

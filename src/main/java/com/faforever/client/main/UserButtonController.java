@@ -6,6 +6,7 @@ import com.faforever.client.fx.JavaFxUtil;
 import com.faforever.client.player.PlayerService;
 import com.faforever.client.reporting.ReportDialogController;
 import com.faforever.client.theme.UiService;
+import com.faforever.client.user.UserService;
 import com.faforever.client.user.event.LogOutRequestEvent;
 import com.faforever.client.user.event.LoginSuccessEvent;
 import com.google.common.eventbus.EventBus;
@@ -27,6 +28,7 @@ public class UserButtonController implements Controller<Node> {
   private final EventBus eventBus;
   private final PlayerService playerService;
   private final UiService uiService;
+  private final UserService userService;
   public MenuButton userMenuButtonRoot;
 
   public void initialize() {
@@ -35,7 +37,7 @@ public class UserButtonController implements Controller<Node> {
 
   @Subscribe
   public void onLoginSuccessEvent(LoginSuccessEvent event) {
-    JavaFxUtil.runLater(() -> userMenuButtonRoot.setText(event.getUsername()));
+    JavaFxUtil.runLater(() -> userMenuButtonRoot.setText(userService.getUsername()));
   }
 
   @Override
