@@ -1,7 +1,13 @@
 package com.faforever.client.user;
 
+import com.faforever.client.api.SessionExpiredEvent;
 import com.faforever.client.api.TokenService;
+import com.faforever.client.api.TokenService.AuthenticationExpiredException;
+import com.faforever.client.i18n.I18n;
 import com.faforever.client.login.LoginFailedException;
+import com.faforever.client.notification.ImmediateNotification;
+import com.faforever.client.notification.NotificationService;
+import com.faforever.client.notification.Severity;
 import com.faforever.client.preferences.PreferencesService;
 import com.faforever.client.remote.FafService;
 import com.faforever.client.remote.domain.LoginMessage;
@@ -11,10 +17,11 @@ import com.faforever.client.user.event.HydraAuthorizedEvent;
 import com.faforever.client.user.event.LogOutRequestEvent;
 import com.faforever.client.user.event.LoggedOutEvent;
 import com.faforever.client.user.event.LoginSuccessEvent;
+import com.faforever.commons.api.dto.MeResult;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +31,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 @Lazy
 @Service
@@ -31,12 +39,14 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 public class UserService implements InitializingBean {
 
-  private final StringProperty username = new SimpleStringProperty();
+  private final ObjectProperty<MeResult> ownUser = new SimpleObjectProperty<>();
 
   private final FafService fafService;
   private final PreferencesService preferencesService;
   private final EventBus eventBus;
   private final TokenService tokenService;
+  private final NotificationService notificationService;
+  private final I18n i18n;
 
   private Integer userId;
   private CompletableFuture<Void> loginFuture;
@@ -61,10 +71,20 @@ public class UserService implements InitializingBean {
   }
 
   public CompletableFuture<Void> loginWithRefreshToken(String refreshToken) {
-    loginFuture = CompletableFuture.runAsync(() -> tokenService.loginWithRefreshToken(refreshToken))
+    loginFuture = CompletableFuture.runAsync(() -> {
+      try {
+        tokenService.loginWithRefreshToken(refreshToken);
+      } catch (AuthenticationExpiredException e) {
+        throw new CompletionException(e);
+      }
+    })
         .thenRunAsync(() -> eventBus.post(new HydraAuthorizedEvent()))
         .exceptionally(throwable -> {
-          log.error("Cannot login with refresh token", throwable);
+          if (throwable.getCause() instanceof AuthenticationExpiredException) {
+            log.info("Refresh token expired");
+          } else {
+            log.error("Cannot login with refresh token", throwable);
+          }
           return null;
         });
     return loginFuture;
@@ -72,7 +92,7 @@ public class UserService implements InitializingBean {
 
 
   public String getUsername() {
-    return username.get();
+    return ownUser.get().getUserName();
   }
 
 
@@ -81,7 +101,7 @@ public class UserService implements InitializingBean {
   }
 
   public Integer getUserId() {
-    return userId;
+    return Integer.parseInt(ownUser.get().getUserId());
   }
 
 
@@ -109,6 +129,14 @@ public class UserService implements InitializingBean {
     preferencesService.storeInBackground();
   }
 
+  @Subscribe
+  public void onSessionExpired(SessionExpiredEvent sessionExpiredEvent) {
+    if (loginFuture.isDone()) {
+      logOut();
+      notificationService.addNotification(new ImmediateNotification(i18n.get("session.expired.title"), i18n.get("session.expired.message"), Severity.INFO));
+    }
+  }
+
   @Override
   public void afterPropertiesSet() {
     fafService.addOnMessageListener(LoginMessage.class, loginInfo -> userId = loginInfo.getId());
@@ -119,8 +147,7 @@ public class UserService implements InitializingBean {
   @Subscribe
   public void onApiAuthorizedEvent(ApiAuthorizedEvent event) {
     fafService.getCurrentPlayer().thenAccept(me -> {
-      username.set(me.getUserName());
-      userId = Integer.parseInt(me.getId());
+      setOwnUser(me);
       eventBus.post(new LoginSuccessEvent());
     });
   }
@@ -128,5 +155,17 @@ public class UserService implements InitializingBean {
   @Subscribe
   public void onLogoutRequestEvent(LogOutRequestEvent event) {
     logOut();
+  }
+
+  public MeResult getOwnUser() {
+    return ownUser.get();
+  }
+
+  public void setOwnUser(MeResult ownUser) {
+    this.ownUser.set(ownUser);
+  }
+
+  public ObjectProperty<MeResult> ownUserProperty() {
+    return ownUser;
   }
 }

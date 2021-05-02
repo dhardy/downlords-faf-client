@@ -33,7 +33,7 @@ public interface FafServerAccessor {
 
   ReadOnlyObjectProperty<ConnectionState> connectionStateProperty();
 
-  CompletableFuture<LoginMessage> connectAndLogIn(String username, String password);
+  CompletableFuture<LoginMessage> connectAndLogIn(String token);
 
   CompletableFuture<GameLaunchMessage> requestHostGame(NewGameInfo newGameInfo);
 

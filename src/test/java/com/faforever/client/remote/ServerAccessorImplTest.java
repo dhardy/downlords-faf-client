@@ -119,7 +119,6 @@ public class ServerAccessorImplTest extends AbstractPlainJavaFxTest {
     instance.afterPropertiesSet();
     LoginPrefs loginPrefs = new LoginPrefs();
     loginPrefs.setRefreshToken("junit");
-    loginPrefs.setPassword("password");
 
     when(preferencesService.getFafDataDirectory()).thenReturn(faDirectory.getRoot().toPath());
     when(uidService.generate(any(), any())).thenReturn("encrypteduidstring");
@@ -164,7 +163,7 @@ public class ServerAccessorImplTest extends AbstractPlainJavaFxTest {
     String password = "JunitPassword";
     long sessionId = 456;
 
-    CompletableFuture<LoginMessage> loginFuture = instance.connectAndLogIn(username, password).toCompletableFuture();
+    CompletableFuture<LoginMessage> loginFuture = instance.connectAndLogIn(username).toCompletableFuture();
 
     String initSessionJSON = messagesReceivedByFafServer.poll(TIMEOUT, TIMEOUT_UNIT);
 
@@ -206,7 +205,7 @@ public class ServerAccessorImplTest extends AbstractPlainJavaFxTest {
   }
 
   private void connectAndLogIn() throws Exception {
-    CompletableFuture<LoginMessage> loginFuture = instance.connectAndLogIn("JUnit", "JUnitPassword").toCompletableFuture();
+    CompletableFuture<LoginMessage> loginFuture = instance.connectAndLogIn("JUnit").toCompletableFuture();
 
     assertNotNull(messagesReceivedByFafServer.poll(TIMEOUT, TIMEOUT_UNIT));
 
