@@ -20,6 +20,7 @@ import com.faforever.client.remote.domain.GameEndedMessage;
 import com.faforever.client.remote.domain.GameLaunchMessage;
 import com.faforever.client.remote.domain.IceMessage;
 import com.faforever.client.remote.domain.IceServersServerMessage.IceServer;
+import com.faforever.client.remote.domain.LoginMessage;
 import com.faforever.client.remote.domain.PeriodType;
 import com.faforever.client.remote.domain.ServerMessage;
 import com.faforever.client.replay.Replay;
@@ -113,6 +114,11 @@ public class FafService {
 
   public void sendGpgGameMessage(GpgGameMessage message) {
     fafServerAccessor.sendGpgMessage(message);
+  }
+
+  @Async
+  public CompletableFuture<LoginMessage> connectToServer(String token) {
+    return fafServerAccessor.connectAndLogin(token);
   }
 
   public void disconnect() {

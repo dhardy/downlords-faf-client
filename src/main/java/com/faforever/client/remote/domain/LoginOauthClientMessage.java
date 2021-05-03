@@ -15,7 +15,7 @@ public class LoginOauthClientMessage extends ClientMessage {
   private String uniqueId;
 
   public LoginOauthClientMessage(String token, long session, String uniqueId) {
-    super(ClientMessageType.LOGIN);
+    super(ClientMessageType.OAUTH_LOGIN);
     this.setToken(token);
     this.setSession(session);
     this.setUniqueId(uniqueId);

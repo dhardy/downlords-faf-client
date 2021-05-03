@@ -10,7 +10,6 @@ import com.faforever.client.notification.NotificationService;
 import com.faforever.client.notification.Severity;
 import com.faforever.client.preferences.PreferencesService;
 import com.faforever.client.remote.FafService;
-import com.faforever.client.remote.domain.LoginMessage;
 import com.faforever.client.remote.domain.NoticeMessage;
 import com.faforever.client.user.event.ApiAuthorizedEvent;
 import com.faforever.client.user.event.HydraAuthorizedEvent;
@@ -48,7 +47,6 @@ public class UserService implements InitializingBean {
   private final NotificationService notificationService;
   private final I18n i18n;
 
-  private Integer userId;
   private CompletableFuture<Void> loginFuture;
   @Getter
   private String state;
@@ -139,17 +137,16 @@ public class UserService implements InitializingBean {
 
   @Override
   public void afterPropertiesSet() {
-    fafService.addOnMessageListener(LoginMessage.class, loginInfo -> userId = loginInfo.getId());
     fafService.addOnMessageListener(NoticeMessage.class, this::onLoginError);
     eventBus.register(this);
   }
 
   @Subscribe
   public void onApiAuthorizedEvent(ApiAuthorizedEvent event) {
-    fafService.getCurrentPlayer().thenAccept(me -> {
+    fafService.getCurrentPlayer().thenCompose(me -> {
       setOwnUser(me);
-      eventBus.post(new LoginSuccessEvent());
-    });
+      return fafService.connectToServer(tokenService.getRefreshedToken().getValue());
+    }).thenAccept((loginMessage) -> eventBus.post(new LoginSuccessEvent()));
   }
 
   @Subscribe

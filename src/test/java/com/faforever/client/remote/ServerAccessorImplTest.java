@@ -163,7 +163,7 @@ public class ServerAccessorImplTest extends AbstractPlainJavaFxTest {
     String password = "JunitPassword";
     long sessionId = 456;
 
-    CompletableFuture<LoginMessage> loginFuture = instance.connectAndLogIn(username).toCompletableFuture();
+    CompletableFuture<LoginMessage> loginFuture = instance.connectAndLogin(username).toCompletableFuture();
 
     String initSessionJSON = messagesReceivedByFafServer.poll(TIMEOUT, TIMEOUT_UNIT);
 
@@ -205,7 +205,7 @@ public class ServerAccessorImplTest extends AbstractPlainJavaFxTest {
   }
 
   private void connectAndLogIn() throws Exception {
-    CompletableFuture<LoginMessage> loginFuture = instance.connectAndLogIn("JUnit").toCompletableFuture();
+    CompletableFuture<LoginMessage> loginFuture = instance.connectAndLogin("JUnit").toCompletableFuture();
 
     assertNotNull(messagesReceivedByFafServer.poll(TIMEOUT, TIMEOUT_UNIT));
 

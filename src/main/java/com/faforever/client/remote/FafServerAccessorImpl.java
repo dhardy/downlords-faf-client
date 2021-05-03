@@ -230,7 +230,7 @@ public class FafServerAccessorImpl extends AbstractServerAccessor implements Faf
   }
 
   @Override
-  public CompletableFuture<LoginMessage> connectAndLogIn(String token) {
+  public CompletableFuture<LoginMessage> connectAndLogin(String token) {
     sessionFuture = new CompletableFuture<>();
     loginFuture = new CompletableFuture<>();
     this.token = token;

@@ -3,6 +3,7 @@ package com.faforever.client.api;
 import com.faforever.client.preferences.PreferencesService;
 import com.google.gson.Gson;
 import lombok.Data;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
@@ -41,7 +42,8 @@ public class TokenService {
     return Instant.ofEpochSecond(refreshTokenObject.getExp());
   }
 
-  public OAuth2AccessToken getRefreshedToken() throws AuthenticationExpiredException {
+  @SneakyThrows
+  public OAuth2AccessToken getRefreshedToken() {
     if (tokenCache != null && tokenCache.getRefreshToken() != null
         && getExpireOfRefreshToke(tokenCache.getRefreshToken().getValue()).isBefore(Instant.now())) {
       log.debug("Refresh Token expired");
@@ -67,7 +69,7 @@ public class TokenService {
     MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
     map.add("code", code);
     map.add("client_id", "faf-ng-client");
-    map.add("redirect_uri", "https://test.faforever.com/callback");
+    map.add("redirect_uri", "http://localhost:3000/callback");
     map.add("grant_type", "authorization_code");
     map.add("client_secret", "banana");
 
@@ -100,7 +102,7 @@ public class TokenService {
     MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
     map.add("refresh_token", refreshToken);
     map.add("client_id", "faf-ng-client");
-    map.add("redirect_uri", "https://test.faforever.com/callback");
+    map.add("redirect_uri", "http://localhost:3000/callback");
     map.add("grant_type", "refresh_token");
     map.add("client_secret", "banana");
 
