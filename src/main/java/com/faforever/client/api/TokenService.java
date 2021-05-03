@@ -1,22 +1,18 @@
 package com.faforever.client.api;
 
 import com.faforever.client.preferences.PreferencesService;
-import com.google.gson.Gson;
-import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.security.jwt.JwtHelper;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.Instant;
 import java.util.Collections;
 
 @Service
@@ -35,21 +31,8 @@ public class TokenService {
         build();
   }
 
-  private Instant getExpireOfRefreshToke(String refreshToken) {
-    String decode = JwtHelper.decode(refreshToken).getClaims();
-    Gson gson = new Gson();
-    RefreshToken refreshTokenObject = gson.fromJson(decode, RefreshToken.class);
-    return Instant.ofEpochSecond(refreshTokenObject.getExp());
-  }
-
   @SneakyThrows
   public OAuth2AccessToken getRefreshedToken() {
-    if (tokenCache != null && tokenCache.getRefreshToken() != null
-        && getExpireOfRefreshToke(tokenCache.getRefreshToken().getValue()).isBefore(Instant.now())) {
-      log.debug("Refresh Token expired");
-      throw new AuthenticationExpiredException();
-    }
-
     if (tokenCache == null || tokenCache.isExpired()) {
       log.debug("Token expired, fetching new token");
       refreshOAuthToken();
@@ -69,7 +52,7 @@ public class TokenService {
     MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
     map.add("code", code);
     map.add("client_id", "faf-ng-client");
-    map.add("redirect_uri", "http://localhost:3000/callback");
+    map.add("redirect_uri", "https://test.faforever.com/callback");
     map.add("grant_type", "authorization_code");
     map.add("client_secret", "banana");
 
@@ -90,10 +73,6 @@ public class TokenService {
   }
 
   public OAuth2AccessToken loginWithRefreshToken(String refreshToken) throws AuthenticationExpiredException {
-    if (getExpireOfRefreshToke(refreshToken).isBefore(Instant.now())) {
-      log.debug("Refresh Token expired");
-      throw new AuthenticationExpiredException();
-    }
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
     headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON_UTF8));
@@ -102,7 +81,7 @@ public class TokenService {
     MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
     map.add("refresh_token", refreshToken);
     map.add("client_id", "faf-ng-client");
-    map.add("redirect_uri", "http://localhost:3000/callback");
+    map.add("redirect_uri", "https://test.faforever.com/callback");
     map.add("grant_type", "refresh_token");
     map.add("client_secret", "banana");
 
@@ -117,11 +96,6 @@ public class TokenService {
     preferencesService.getPreferences().getLogin().setRefreshToken(tokenCache.getRefreshToken().toString());
     preferencesService.storeInBackground();
     return tokenCache;
-  }
-
-  @Data
-  private static class RefreshToken {
-    private long exp;
   }
 
   public static class AuthenticationExpiredException extends Exception {
