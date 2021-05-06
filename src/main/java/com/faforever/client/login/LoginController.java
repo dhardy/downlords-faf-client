@@ -18,6 +18,7 @@ import com.faforever.client.update.UpdateInfo;
 import com.faforever.client.update.Version;
 import com.faforever.client.user.UserService;
 import com.google.common.annotations.VisibleForTesting;
+import com.sun.javafx.webkit.Accessor;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.scene.control.Button;
@@ -36,6 +37,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import java.awt.Color;
 import java.util.concurrent.CompletableFuture;
 
 @Component
@@ -180,6 +182,7 @@ public class LoginController implements Controller<Pane> {
     }
 
     webViewConfigurer.configureWebView(loginWebView);
+    Accessor.getPageFor(loginWebView.getEngine()).setBackgroundColor(Color.BLACK.getRGB());
     loginWebView.getEngine().locationProperty().addListener((observable, oldValue, newValue) -> {
       int codeIndex = newValue.indexOf("code=");
       if (codeIndex >= 0) {
