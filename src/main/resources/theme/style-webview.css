@@ -222,3 +222,10 @@ html.tournament {
 .tournament img {
   background: rgba(255, 255, 255, .1);
 }
+
+/***************** Login (WebView) *****************/
+
+.main-card {
+  margin: 5% auto auto auto;
+  color: black;
+}
