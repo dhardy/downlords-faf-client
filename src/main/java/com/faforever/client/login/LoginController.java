@@ -162,8 +162,6 @@ public class LoginController implements Controller<Pane> {
               log.error("Error occurred checking for update", e);
             }
 
-            shouldUpdate = true;
-
             if (minimumVersion != null && shouldUpdate) {
               JavaFxUtil.runLater(() -> showClientOutdatedPane(minimumVersion));
             }
