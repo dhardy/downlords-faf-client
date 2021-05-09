@@ -55,6 +55,7 @@ public class LoginController implements Controller<Pane> {
   private final WebViewConfigurer webViewConfigurer;
   private CompletableFuture<Void> initializeFuture;
 
+  public Pane errorPane;
   public Pane loginFormPane;
   public WebView loginWebView;
   public ComboBox<ClientConfiguration.Endpoints> environmentComboBox;
@@ -80,6 +81,7 @@ public class LoginController implements Controller<Pane> {
     updateInfoFuture = clientUpdateService.getNewestUpdate();
 
     downloadUpdateButton.setVisible(false);
+    errorPane.setVisible(false);
     loginErrorLabel.setVisible(false);
     serverConfigPane.setVisible(false);
     serverStatusButton.setVisible(clientProperties.getStatusPageUrl() != null);
@@ -160,6 +162,8 @@ public class LoginController implements Controller<Pane> {
               log.error("Error occurred checking for update", e);
             }
 
+            shouldUpdate = true;
+
             if (minimumVersion != null && shouldUpdate) {
               JavaFxUtil.runLater(() -> showClientOutdatedPane(minimumVersion));
             }
@@ -230,10 +234,12 @@ public class LoginController implements Controller<Pane> {
 
   private void showClientOutdatedPane(String minimumVersion) {
     JavaFxUtil.runLater(() -> {
+      errorPane.setVisible(true);
       loginErrorLabel.setText(i18n.get("login.clientTooOldError", Version.getCurrentVersion(), minimumVersion));
       loginErrorLabel.setVisible(true);
       downloadUpdateButton.setVisible(true);
       loginFormPane.setDisable(true);
+      loginFormPane.setVisible(false);
       loginWebView.setVisible(false);
       log.warn("Update required");
     });

@@ -12,36 +12,48 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.web.WebView?>
-<VBox fx:id="loginRoot" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="login-root" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.faforever.client.login.LoginController">
-  <children>
-      <VBox maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
-          <VBox maxWidth="Infinity" styleClass="login" VBox.vgrow="ALWAYS">
-              <children>
-                  <Label fx:id="loginErrorLabel" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308"
-                         minHeight="0.0" minWidth="0.0" styleClass="hint"
-                         text="This error message is supposed to be long enough to test text wrapping" wrapText="true">
-                      <graphic>
-                          <Region styleClass="icon,error-icon"/>
-                      </graphic>
-                      <VBox.margin>
-                          <Insets bottom="5.0"/>
-                      </VBox.margin>
-                  </Label>
-                  <VBox fx:id="loginFormPane" alignment="TOP_CENTER" maxHeight="1.7976931348623157E308" spacing="5.0"
-                        VBox.vgrow="ALWAYS">
-                      <children>
-                          <WebView fx:id="loginWebView" VBox.vgrow="ALWAYS" maxHeight="Infinity"/>
-                          <HBox maxWidth="500" alignment="CENTER">
-                              <children>
-                                  <Label maxHeight="1.7976931348623157E308" minWidth="-Infinity"
-                                         text="%login.environment"
-                                         onMouseClicked="#onMouseClicked">
-                                      <HBox.margin>
-                                          <Insets right="10.0"/>
-                                      </HBox.margin>
-                                  </Label>
-                                  <ComboBox fx:id="environmentComboBox" maxWidth="1.7976931348623157E308"
-                                            HBox.hgrow="ALWAYS"/>
+<VBox xmlns:fx="http://javafx.com/fxml/1" fx:id="loginRoot" maxHeight="1.7976931348623157E308"
+      maxWidth="1.7976931348623157E308" styleClass="login-root" xmlns="http://javafx.com/javafx/11.0.1"
+      fx:controller="com.faforever.client.login.LoginController"
+      alignment="CENTER">
+    <children>
+        <VBox maxWidth="Infinity" VBox.vgrow="ALWAYS" alignment="CENTER">
+            <children>
+                <VBox fx:id="errorPane" alignment="CENTER" VBox.vgrow="ALWAYS">
+                    <Label fx:id="loginErrorLabel" maxWidth="500"
+                           minHeight="0.0" minWidth="0.0" styleClass="hint" VBox.vgrow="NEVER" alignment="CENTER"
+                           text="This error message is supposed to be long enough to test text wrapping"
+                           wrapText="true">
+                        <graphic>
+                            <Region styleClass="icon,error-icon"/>
+                        </graphic>
+                        <VBox.margin>
+                            <Insets bottom="5.0"/>
+                        </VBox.margin>
+                    </Label>
+                    <Button fx:id="downloadUpdateButton" maxWidth="500" minWidth="-Infinity"
+                            onAction="#onDownloadUpdateButtonClicked" prefHeight="50.0" VBox.vgrow="NEVER"
+                            text="%login.button.downloadUpdate" alignment="CENTER">
+                        <VBox.margin>
+                            <Insets bottom="10.0"/>
+                        </VBox.margin>
+                    </Button>
+                </VBox>
+                <VBox fx:id="loginFormPane" alignment="TOP_CENTER" maxHeight="1.7976931348623157E308" spacing="5.0"
+                      VBox.vgrow="ALWAYS">
+                    <children>
+                        <WebView fx:id="loginWebView" VBox.vgrow="ALWAYS" maxHeight="Infinity"/>
+                        <HBox maxWidth="500" alignment="CENTER" VBox.vgrow="NEVER">
+                            <children>
+                                <Label maxHeight="1.7976931348623157E308" minWidth="-Infinity"
+                                       text="%login.environment"
+                                       onMouseClicked="#onMouseClicked">
+                                    <HBox.margin>
+                                        <Insets right="10.0"/>
+                                    </HBox.margin>
+                                </Label>
+                                <ComboBox fx:id="environmentComboBox" maxWidth="1.7976931348623157E308"
+                                          HBox.hgrow="ALWAYS"/>
                               </children>
                           </HBox>
                           <GridPane fx:id="serverConfigPane" vgap="5.0" VBox.vgrow="SOMETIMES" maxWidth="500"
@@ -75,16 +87,8 @@
                           </GridPane>
                       </children>
                   </VBox>
-                  <Button fx:id="downloadUpdateButton" maxWidth="1.7976931348623157E308" minWidth="-Infinity"
-                          onAction="#onDownloadUpdateButtonClicked" prefHeight="50.0"
-                          text="%login.button.downloadUpdate">
-                      <VBox.margin>
-                          <Insets bottom="10.0"/>
-                      </VBox.margin>
-                  </Button>
               </children>
           </VBox>
-      </VBox>
       <HBox alignment="BOTTOM_RIGHT" maxWidth="1.7976931348623157E308" VBox.vgrow="NEVER">
           <children>
               <Button fx:id="serverStatusButton" onMouseClicked="#seeServerStatus" text="See server status">
