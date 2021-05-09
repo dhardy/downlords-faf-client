@@ -18,6 +18,9 @@
       alignment="CENTER">
     <children>
         <VBox maxWidth="Infinity" VBox.vgrow="ALWAYS" alignment="CENTER">
+            <VBox.margin>
+                <Insets top="30.0" left="30.0" right="30.0"/>
+            </VBox.margin>
             <children>
                 <VBox fx:id="errorPane" alignment="CENTER" VBox.vgrow="ALWAYS">
                     <Label fx:id="loginErrorLabel" maxWidth="500"
@@ -42,7 +45,7 @@
                 <VBox fx:id="loginFormPane" alignment="TOP_CENTER" maxHeight="1.7976931348623157E308" spacing="5.0"
                       VBox.vgrow="ALWAYS">
                     <children>
-                        <WebView fx:id="loginWebView" VBox.vgrow="ALWAYS" maxHeight="Infinity"/>
+                        <WebView fx:id="loginWebView" VBox.vgrow="ALWAYS" maxHeight="Infinity" maxWidth="1000"/>
                         <HBox maxWidth="500" alignment="CENTER" VBox.vgrow="NEVER">
                             <children>
                                 <Label maxHeight="1.7976931348623157E308" minWidth="-Infinity"

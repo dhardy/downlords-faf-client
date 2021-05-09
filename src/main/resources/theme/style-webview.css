@@ -226,6 +226,10 @@ html.tournament {
 /***************** Login (WebView) *****************/
 
 .main-card {
-  margin: 5% auto auto auto;
+  margin: 0 auto 0 auto;
   color: black;
+}
+
+.tooltiptext {
+  color: white;
 }
