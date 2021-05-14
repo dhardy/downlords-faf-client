@@ -18,16 +18,14 @@ import java.util.Collections;
 @Service
 @Slf4j
 public class TokenService {
-  private final TokenServiceProperties tokenServiceProperties;
   private final PreferencesService preferencesService;
-  private final RestTemplate simpleRestTemplate;
+  private final RestTemplate restTemplate;
   private OAuth2AccessToken tokenCache;
 
-  public TokenService(TokenServiceProperties tokenServiceProperties, PreferencesService preferencesService) {
-    this.tokenServiceProperties = tokenServiceProperties;
+  public TokenService(PreferencesService preferencesService) {
     this.preferencesService = preferencesService;
 
-    simpleRestTemplate = new RestTemplateBuilder().
+    restTemplate = new RestTemplateBuilder().
         build();
   }
 
@@ -58,7 +56,7 @@ public class TokenService {
 
     HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
 
-    tokenCache = simpleRestTemplate.postForObject(
+    tokenCache = restTemplate.postForObject(
         "https://hydra.test.faforever.com/oauth2/token",
         request,
         OAuth2AccessToken.class
@@ -87,7 +85,7 @@ public class TokenService {
 
     HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
 
-    tokenCache = simpleRestTemplate.postForObject(
+    tokenCache = restTemplate.postForObject(
         "https://hydra.test.faforever.com/oauth2/token",
         request,
         OAuth2AccessToken.class
