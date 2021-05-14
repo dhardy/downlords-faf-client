@@ -2,7 +2,6 @@ package com.faforever.client.remote;
 
 import com.faforever.client.config.ClientProperties;
 import com.faforever.client.fa.relay.GpgGameMessage;
-import com.faforever.client.game.Faction;
 import com.faforever.client.game.NewGameInfo;
 import com.faforever.client.legacy.UidService;
 import com.faforever.client.net.ConnectionState;
@@ -17,6 +16,7 @@ import com.faforever.client.remote.domain.PeriodType;
 import com.faforever.client.remote.domain.ServerMessage;
 import com.faforever.client.remote.gson.ServerMessageMapper;
 import com.faforever.client.teammatchmaking.MatchmakingQueue;
+import com.faforever.commons.api.dto.Faction;
 import com.faforever.commons.lobby.FafLobbyClient;
 import com.faforever.commons.lobby.FafLobbyClient.Config;
 import com.faforever.commons.lobby.GameLaunchResponse;
@@ -89,8 +89,7 @@ public class ReactiveFafServerAccessor implements FafServerAccessor {
 
     FafLobbyClient.Config config = new Config(
         clientProperties.getServer().getHost(),
-//        clientProperties.getServer().getPort(),
-        8002,
+        clientProperties.getServer().getPort() + 1,
         username,
         password,
         "127.0.0.1",
